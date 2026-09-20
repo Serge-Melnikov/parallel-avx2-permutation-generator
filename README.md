@@ -67,17 +67,25 @@ cl /O2 /arch:AVX2 /openmp ymm_final_en_mt_cb.c /Fe:ymm_final_en_mt_cb
 
 ## Usage
 
-The executable expects exactly two arguments: the permutation target length (6 ≤ n ≤ 16) and the thread token configuration (e.g. `t5` or `5`).
+Both executable binaries expect exactly two arguments: the permutation target length (6 ≤ n ≤ 16) and the thread configuration token (e.g. `t5` or `5`).
 
+### 1. High-Performance Benchmarking Mode (Default)
+By default, both versions run in an accelerated idle configuration to measure raw hardware execution cycles without IO bottlenecks.
 ```bash
-# Execute benchmark for n=14 utilizing 5 parallel threads
-./ymm_final_en_mt_cb 14 t5
-
-# Generate and print all 10! permutations thread-safely across 7 workers
-./ymm_final_en_mt_cb 10 t7 > output_permutations.txt
+# Execute speed benchmark for n=14 utilizing 5 threads
+./ymm_final_en_mt 14 t5
 ```
 
-To enable the practical demonstration mode that invokes the `MyDemoCallback` routine and prints all generated states, uncomment the following line in the source file:
+### 2. Verbose Output Mode (Printing All Permutations)
+To enable the verbose generation trace that physically outputs the permutations to the console or a file, **you must uncomment the following line at the top of the respective source file (`ymm_final_en_mt.c` or `ymm_final_en_mt_cb.c`) before compilation**:
+
 ```c
 #define HALF_PRINT_ENABLED
 ```
+
+Once activated and compiled, use standard shell operators to safely redirect the massive stream of permutations into a structured text file:
+```bash
+# Generate and stream all 10! permutations thread-safely across 7 workers into a file
+./ymm_final_en_mt_cb 10 t7 > output_permutations.txt
+```
+*Note: In verbose mode, the benchmark version (`ymm_final_en_mt`) prints the optimized baseline transitions, while the callback version (`ymm_final_en_mt_cb`) invokes `MyDemoCallback` to print the full expanded n-element permutations alongside their reverse mirror images.*
