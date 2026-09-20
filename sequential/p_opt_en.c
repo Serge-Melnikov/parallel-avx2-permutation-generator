@@ -15,11 +15,16 @@
  * replication purposes in connection with the arXiv.org publication.
  */
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include <stdio.h>
+#include <stdlib.h>
 #include <inttypes.h>
 #include <immintrin.h>
 
-// Cross-platform header for CPUID
+/* Cross-platform header for CPUID */
 #ifdef _MSC_VER
 #include <intrin.h>
 #else
@@ -30,20 +35,18 @@
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
 #elif defined(__linux__)
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
 #include <sched.h>
 #include <pthread.h>
 #endif
 
-void set_thread_affinity() {
+void set_thread_affinity() 
+{
 #if defined(_WIN32) || defined(_WIN64)
-    SetThreadAffinityMask(GetCurrentThread(), 0x01); // Thread affinity binding to Core 0 in Windows
+    SetThreadAffinityMask(GetCurrentThread(), 0x01); /* Thread affinity binding to Core 0 in Windows */
 #elif defined(__linux__)
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
-    CPU_SET(0, &cpuset); // Thread affinity binding to Core 0 in Linux
+    CPU_SET(0, &cpuset); /* Thread affinity binding to Core 0 in Linux */
     pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
 #endif
 }
@@ -51,7 +54,7 @@ void set_thread_affinity() {
 // Set to 1 to enable execution time tracking, 0 to disable
 #define PRINT_TIME 1
 // Set to 1 to display the generated permutations, 0 to disable
-#define DOPRINT 0
+#define DOPRINT 1
 typedef uint64_t U64;
 typedef uint32_t U32;
 typedef int32_t I32;
