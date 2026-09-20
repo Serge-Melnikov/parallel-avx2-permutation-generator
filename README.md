@@ -9,6 +9,35 @@ A state-of-the-art SIMD-accelerated parallel algorithm for generating all n! per
 - **Practical Callback Interface:** Support for high-speed custom user callbacks (`PermCallback`) executed directly out of registers.
 - **Dynamic Remainder Alignment:** Eliminates space allocation truncation errors under arbitrary thread counts.
 
+## Repository Structure
+
+The project is structured into functional directories separating the baseline sequential logic from the high-performance parallel source files:
+
+## Repository Structure
+
+The project is structured into functional directories separating the baseline sequential algorithms from the high-performance parallel source files:
+
+```text
+├── sequential/
+│   ├── p_opt_en.c              # Knuth's Algorithm P optimized via isolated sweeping branch (3x speedup)
+│   ├── ymm_final_en.c          # Single-threaded baseline vector implementation (idle run benchmark)
+│   └── ymm_final_en1.c         # Practical single-threaded vector generator featuring a user callback
+└── parallel/
+    ├── ymm_final_en_mt.c       # Multi-threaded benchmark version (idle run, no callbacks)
+    └── ymm_final_en_mt_cb.c    # Practical multi-threaded version featuring a user callback
+```
+
+### Program Slices and Methodologies
+
+#### Sequential Implementations (`sequential/`)
+* **`p_opt_en.c` (Knuth's Algorithm P Optimized):** An accelerated implementation of the classic lexicographical Generation Algorithm P from Donald Knuth's *The Art of Computer Programming* (Volume 4A). This routine achieves a **3x speedup** over the naive design by strategically decoupling the fast-sweeping ladder loops of element n-1 into an isolated, hyper-optimized execution branch.
+* **`ymm_final_en.c` (Single-Threaded SIMD Benchmark):** The sequential baseline leveraging 256-bit AVX2 vectors to execute split twin-lane combinatorial sweeps. Stripped of function pointers, it measures raw hardware execution limits.
+* **`ymm_final_en1.c` (Practical Single-Threaded SIMD):** Incorporates a sequential user-defined callback execution interface. It passes streaming permutations straight from the YMM registers to application-level routines for real-time processing.
+
+#### Parallel Implementations (`parallel/`)
+* **`ymm_final_en_mt.c` (Multi-Threaded SIMD Benchmark):** Utilizes OpenMP multi-core loops combined with our dynamic `StructuralInitState` space mapping decoder. It slices the n!/4 invariant space into strict macro-periods for synchronous idle hardware benchmarks across physical cores.
+* **`ymm_final_en_mt_cb.c` (Practical Multi-Threaded SIMD):** The definitive multi-threaded engine providing a thread-safe `PermCallback` pipeline. Each active worker thread streams distinct permutation slices out of its local registers into synchronized user handlers, enabling concurrent graph traversal or combinatorial optimization solvers.
+
 ## Performance & Scalability Benchmark
 
 Evaluated on an x86_64 architecture with 6 physical cores (Hyper-Threading active):
