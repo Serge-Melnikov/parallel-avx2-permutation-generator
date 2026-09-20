@@ -54,19 +54,44 @@ void set_thread_affinity()
 // Set to 1 to enable execution time tracking, 0 to disable
 #define PRINT_TIME 1
 // Set to 1 to display the generated permutations, 0 to disable
-#define DOPRINT 1
+#define DOPRINT 0
 typedef uint64_t U64;
 typedef uint32_t U32;
 typedef int32_t I32;
 typedef uint8_t U8;
 #define MAXN 36
 
-// Memory barrier to prevent compiler optimizations from eliminating the loop payload
-#define PERM_PRINT __asm__ volatile("" : : "g" (p) : "memory"); \
-if (DOPRINT) \
- { for (I32 i = 0; i < n; i++) printf("%c", chars[p[i]]); \
-   puts(""); \
- }
+// To prevent compiler optimizations from eliminating the loop payload
+#if defined(__GNUC__) || defined(__clang__)
+  #define PERM_PRINT \
+  if (DOPRINT) \
+  { \
+      for (I32 i = 0; i < n; i++) printf("%c", chars[p[i]]); \
+      puts(""); \
+  } \
+  else \
+  { \
+      __asm__ volatile("" : : "g" (p) : "memory"); \
+  }
+#elif defined(_MSC_VER)
+  #define PERM_PRINT \
+  if (DOPRINT) \
+  { \
+      for (I32 i = 0; i < n; i++) printf("%c", chars[p[i]]); \
+      puts(""); \
+  } \
+  else \
+  { \
+      _ReadWriteBarrier(); \
+  }
+#else
+  #define PERM_PRINT \
+  if (DOPRINT) \
+  { \
+      for (I32 i = 0; i < n; i++) printf("%c", chars[p[i]]); \
+      puts(""); \
+  }
+#endif
 
 U8 chars[MAXN] = "0123456789abcdefghijklmnopqrstuvwxyz";
 
@@ -152,7 +177,8 @@ int main(int argc, char* argv[])
      return 1;
    }
 
-  // set_thread_affinity(); // optional
+
+//  set_thread_affinity(); // optional
 
   // CPU warmup (forcing Turbo Boost frequency to its maximum)
   volatile int warm_dummy = 42;
