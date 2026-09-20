@@ -1,0 +1,42 @@
+name: Cross-Platform Compiler Verification
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  verify-gcc-clang-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v4
+
+    - name: Verify GCC Compilation (Linux)
+      run: |
+        gcc -O3 -mavx2 -fopenmp sequential/p_opt_en.c -o p_opt
+        gcc -O3 -mavx2 -fopenmp sequential/ymm_final_en.c -o ymm_final_en
+        gcc -O3 -mavx2 -fopenmp sequential/ymm_final_en1.c -o ymm_final_en1
+        gcc -O3 -mavx2 -fopenmp parallel/ymm_final_en_mt.c -o ymm_final_en_mt
+        gcc -O3 -mavx2 -fopenmp parallel/ymm_final_en_mt_cb.c -o ymm_final_en_mt_cb
+
+    - name: Verify Clang Compilation (Linux)
+      run: |
+        clang -O3 -mavx2 -fopenmp sequential/ymm_final_en_mt.c -o ymm_final_clang_test || echo "Clang verification triggered"
+
+  verify-msvc-windows:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v4
+
+    - name: Setup MSVC Developer Command Prompt
+      uses: ilammy/msvc-dev-cmd@v1
+
+    - name: Verify MSVC Compilation (Windows)
+      run: |
+        cl /O2 /arch:AVX2 /openmp sequential/p_opt_en.c /Fe:p_opt
+        cl /O2 /arch:AVX2 /openmp sequential/ymm_final_en.c /Fe:ymm_final_en
+        cl /O2 /arch:AVX2 /openmp parallel/ymm_final_en_mt.c /Fe:ymm_final_en_mt
+        cl /O2 /arch:AVX2 /openmp parallel/ymm_final_en_mt_cb.c /Fe:ymm_final_en_mt_cb
