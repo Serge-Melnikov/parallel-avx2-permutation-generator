@@ -26,13 +26,6 @@ The project is structured into functional directories separating the baseline se
     └── ymm_final_en_mt_cb.c    # Practical multi-threaded version featuring a user callback
 ```
 
-> ### ⚠️ Important Structural Note on Vector Engines
-> All vectorized generators (`ymm_final_*`) are explicitly engineered to traverse **only the first half (\(n!/2\))** of the total permutation space. Due to the underlying combinatorial symmetry, the remaining half of the \(n!\) space is deterministically obtained by reversing each generated permutation sequence from the first half. 
-> 
-> By processing only the structural half of the space and generating the rest via reverse lookups on the fly, this architectural design **doubles the computational generation throughput** and **reduces the spatial memory footprint by exactly 50%**.
-
-### Program Slices and Methodologies
-
 #### Sequential Implementations (`sequential/`)
 * **`p_opt_en.c` (Knuth's Algorithm P Optimized):** An accelerated implementation of Knuth's Algorithm P (the classic Johnson-Trotter adjacent transposition method) from Donald Knuth's *The Art of Computer Programming* (Volume 4A, Section 7.2.1.2). This routine achieves a **3x speedup** over the naive design by strategically decoupling the fast-sweeping ladder loops of element n-1 into an isolated, hyper-optimized execution branch, minimizing loop-overhead.
 * **`ymm_final_en.c` (Single-Threaded SIMD Benchmark):** The sequential baseline leveraging 256-bit AVX2 vectors to execute split twin-lane combinatorial sweeps across the \(n!/2\) space boundaries. Stripped of function pointers, it measures raw hardware execution limits.
