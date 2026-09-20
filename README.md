@@ -3,15 +3,14 @@
 A state-of-the-art SIMD-accelerated parallel algorithm for generating all n! permutations using a highly optimized variant of Shimon Even's method. The implementation utilizes 256-bit YMM registers to process split 128-bit lanes (Lane A and Lane B) simultaneously, achieving near-perfect linear scalability across physical CPU cores via OpenMP.
 
 ## Features
-- **SIMD Architecture:** Vectorized lane splitting (2x 128-bit XMM inside YMM) for twin combinatorial search spaces.
-- **Lock-Free Hot Path:** Register-level local XOR checksums completely eliminate false sharing and thread contention.
-- **Exact Combinatorial Decoding:** `StructuralInitState` uses hardware-backed Bit Manipulation Instructions (`_pdep_u64` and `_tzcnt_u64`) to safely jump to any arbitrary start index up to n ≤ 16.
-- **Practical Callback Interface:** Support for high-speed custom user callbacks (`PermCallback`) executed directly out of registers.
-- **Dynamic Remainder Alignment:** Eliminates space allocation truncation errors under arbitrary thread counts.
 
-## Repository Structure
-
-The project is structured into functional directories separating the baseline sequential logic from the high-performance parallel source files:
+* **Vector Ladder Propagation:** The engine operates on a compressed baseline space of n-1 elements. Once a baseline configuration is established, element n-1 acts as a fast-sweeping agent, propagating through the entire vector via ultra-fast SIMD shuffle loops (`_mm256_shuffle_epi8`). This yields n complete n-element permutations out of a single n-1 layout, reducing the amortized overhead to O(1) CPU cycles per permutation.
+* **Combinatorial Reverse Invariance:** All vectorized routines are explicitly engineered to traverse **only the first half (n!/2)** of the total permutation space boundaries. The remaining half of the n! space is deterministically obtained by reversing each generated sequence from the first half. This **doubles the effective generation throughput** and **reduces the spatial memory footprint by exactly 50%**.
+* **SIMD Twin-Lane Architecture:** Vectorized lane splitting (two 128-bit XMM tracks inside a single 256-bit YMM register) for processing independent combinatorial search spaces in parallel.
+* **Lock-Free Hot Path:** Register-level local XOR checksums completely eliminate false sharing and thread contention across cores.
+* **Exact Combinatorial Decoding:** `StructuralInitState` uses hardware-backed Bit Manipulation Instructions (`_pdep_u64` and `_tzcnt_u64`) along with bounded factorial lookup tables to safely jump to any arbitrary start index up to n ≤ 16.
+* **Practical Callback Interface:** Support for high-speed custom user callbacks (`PermCallback`) executed thread-safely directly out of hardware registers.
+* **Dynamic Remainder Alignment:** Completely eliminates space allocation truncation errors under arbitrary thread counts.
 
 ## Repository Structure
 
@@ -19,7 +18,7 @@ The project is structured into functional directories separating the baseline se
 
 ```text
 ├── sequential/
-│   ├── p_opt_en.c              # Knuth's Algorithm P optimized via isolated sweeping branch (3x speedup)
+│   ├── p_opt_en.c              # Knuth's Algorithm P (Johnson-Trotter) optimized via isolated sweeping branch (3x speedup)
 │   ├── ymm_final_en.c          # Single-threaded baseline vector implementation (idle run benchmark)
 │   └── ymm_final_en1.c         # Practical single-threaded vector generator featuring a user callback
 └── parallel/
@@ -27,16 +26,21 @@ The project is structured into functional directories separating the baseline se
     └── ymm_final_en_mt_cb.c    # Practical multi-threaded version featuring a user callback
 ```
 
+> ### ⚠️ Important Structural Note on Vector Engines
+> All vectorized generators (`ymm_final_*`) are explicitly engineered to traverse **only the first half (\(n!/2\))** of the total permutation space. Due to the underlying combinatorial symmetry, the remaining half of the \(n!\) space is deterministically obtained by reversing each generated permutation sequence from the first half. 
+> 
+> By processing only the structural half of the space and generating the rest via reverse lookups on the fly, this architectural design **doubles the computational generation throughput** and **reduces the spatial memory footprint by exactly 50%**.
+
 ### Program Slices and Methodologies
 
 #### Sequential Implementations (`sequential/`)
-* **`p_opt_en.c` (Knuth's Algorithm P Optimized):** An accelerated implementation of the classic lexicographical Generation Algorithm P from Donald Knuth's *The Art of Computer Programming* (Volume 4A). This routine achieves a **3x speedup** over the naive design by strategically decoupling the fast-sweeping ladder loops of element n-1 into an isolated, hyper-optimized execution branch.
-* **`ymm_final_en.c` (Single-Threaded SIMD Benchmark):** The sequential baseline leveraging 256-bit AVX2 vectors to execute split twin-lane combinatorial sweeps. Stripped of function pointers, it measures raw hardware execution limits.
-* **`ymm_final_en1.c` (Practical Single-Threaded SIMD):** Incorporates a sequential user-defined callback execution interface. It passes streaming permutations straight from the YMM registers to application-level routines for real-time processing.
+* **`p_opt_en.c` (Knuth's Algorithm P Optimized):** An accelerated implementation of Knuth's Algorithm P (the classic Johnson-Trotter adjacent transposition method) from Donald Knuth's *The Art of Computer Programming* (Volume 4A, Section 7.2.1.2). This routine achieves a **3x speedup** over the naive design by strategically decoupling the fast-sweeping ladder loops of element n-1 into an isolated, hyper-optimized execution branch, minimizing loop-overhead.
+* **`ymm_final_en.c` (Single-Threaded SIMD Benchmark):** The sequential baseline leveraging 256-bit AVX2 vectors to execute split twin-lane combinatorial sweeps across the \(n!/2\) space boundaries. Stripped of function pointers, it measures raw hardware execution limits.
+* **`ymm_final_en1.c` (Practical Single-Threaded SIMD):** Incorporates a sequential user-defined callback execution interface. It streams the first half of permutations straight from the YMM registers, allowing applications to process both the baseline and its reversed mirror layout dynamically.
 
 #### Parallel Implementations (`parallel/`)
-* **`ymm_final_en_mt.c` (Multi-Threaded SIMD Benchmark):** Utilizes OpenMP multi-core loops combined with our dynamic `StructuralInitState` space mapping decoder. It slices the n!/4 invariant space into strict macro-periods for synchronous idle hardware benchmarks across physical cores.
-* **`ymm_final_en_mt_cb.c` (Practical Multi-Threaded SIMD):** The definitive multi-threaded engine providing a thread-safe `PermCallback` pipeline. Each active worker thread streams distinct permutation slices out of its local registers into synchronized user handlers, enabling concurrent graph traversal or combinatorial optimization solvers.
+* **`ymm_final_en_mt.c` (Multi-Threaded SIMD Benchmark):** Utilizes OpenMP multi-core loops combined with our dynamic `StructuralInitState` space mapping decoder. It slices the \(n!/4\) invariant space into strict macro-periods for synchronous idle hardware benchmarks across physical cores.
+* **`ymm_final_en_mt_cb.c` (Practical Multi-Threaded SIMD):** The definitive multi-threaded engine providing a thread-safe `PermCallback` pipeline. Each active worker thread streams distinct permutation slices out of its local registers into synchronized user handlers, enabling concurrent graph traversal or combinatorial optimization solvers with a 50% reduced memory footprint.
 
 ## Performance & Scalability Benchmark
 
