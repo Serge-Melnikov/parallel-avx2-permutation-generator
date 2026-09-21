@@ -47,20 +47,34 @@
     #define UNROLL_16
 #endif
 
-/* Cross-compiler trailing zero count configuration (safe for non-zero inputs) */
+/* Cross-compiler trailing zero count configuration safe for MSVC, GCC, and Clang */
 #if defined(_MSC_VER)
     #include <intrin.h>
-    static inline uint64_t tzcnt_u64_fast(uint64_t value) {
+    static inline uint64_t tzcnt_u64_fallback(uint64_t value) 
+    {
         unsigned long index;
-        _BitScanForward64(&index, value);
-        return (uint64_t)index;
+        if (_BitScanForward64(&index, value)) return (uint64_t)index;
+        return 64;
     }
-    #define TZCNT_U64(x) tzcnt_u64_fast(x)
+    #define TZCNT_U64(x) tzcnt_u64_fallback(x)
+#define tzcnt_u64_fallback(x)
 #elif defined(__GNUC__) || defined(__clang__)
-    /* Generates a single optimal instruction without any branching or checks */
-    #define TZCNT_U64(x) ((uint64_t)__builtin_ctzll(x))
+    /* Builtin CTZ returns undefined for 0, so we must handle the 0 input explicitly */
+    static inline uint64_t tzcnt_u64_gcc(uint64_t value) 
+    {
+        if (value == 0) return 64;
+        return (uint64_t)__builtin_ctzll(value);
+    }
+    #define TZCNT_U64(x) tzcnt_u64_gcc(x)
 #else
-    #define TZCNT_U64(x) 0
+    static inline uint64_t tzcnt_u64_generic(uint64_t value) 
+    {
+        if (value == 0) return 64;
+        uint64_t count = 0;
+        while ((value & 1) == 0) { count++; value >>= 1; }
+        return count;
+    }
+    #define TZCNT_U64(x) tzcnt_u64_generic(x)
 #endif
 
 // Cross-platform header for CPUID
