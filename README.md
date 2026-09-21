@@ -39,15 +39,21 @@ The project is structured into functional directories separating the baseline se
 
 Evaluated on an x86_64 architecture with 6 physical cores (Hyper-Threading active):
 
+## Performance & Scalability Benchmark
+
+Evaluated on an x86_64 architecture with 6 physical cores (Hyper-Threading active):
+
 | Space Complexity (n) | Thread Configuration | CPU Clock Cycles / Time | Speedup Factor | Status |
 |-----------------------|----------------------|-------------------------|----------------|--------|
-| n = 14              | `t1` (Single-Thread) | 17,419,771,736 cycles | Baseline (1.0x)| Verified |
-| n = 14              | `t5` (Multi-Thread)  | **3,252,793,892** cycles | **5.3x** | Verified |
-| n = 15              | `t1` (Single-Thread) | 98.0 seconds            | Baseline (1.0x)| Verified |
-| n = 15              | `t6` (Physical Cores)| **16.0 seconds**        | **6.1x**       | Verified |
-| n = 15              | `t12` (Hyper-Thread) | 16.0 seconds            | 6.1x (Saturated)| Port Starvation |
+| n = 14              | `t1` (Single-Thread) | 14.74B cycles           | Baseline (1.0x)| Verified |
+| n = 14              | `t5` (Multi-Thread)  | **3.25B** cycles        | **4.53x**      | Verified |
+| n = 15              | `t1` (Single-Thread) | 84.0 seconds            | Baseline (1.0x)| Verified |
+| n = 15              | `t6` (Physical Cores)| **16.0 seconds**        | **5.25x**      | Verified |
+| n = 15              | `t12` (Hyper-Thread) | 16.0 seconds            | 5.25x (Saturated)| Port Starvation |
+| n = 16              | `t6` (Physical Cores)| **270.0 seconds**       | **4.98x**      | Thermal Drop* |
 
-*Note: Hyper-Threading provides 0% additional gain because a single thread per physical core completely saturates the vector execution pipelines (SIMD shufflers).*
+*Note: The scalability drop for n=16 (4.98x vs 5.25x) is induced by hardware thermal throttling. Sustained 100% AVX2 vector execution across all physical cores for 4.5 minutes triggers mobile CPU clock-frequency degradation to protect the silicon.*
+*Hyper-Threading provides 0% additional gain because a single thread per physical core completely saturates the vector execution pipelines (SIMD shufflers).*
 
 ## Compilation
 
@@ -56,13 +62,13 @@ The program requires an x86_64 compiler supporting OpenMP and the AVX2 instructi
 ### GCC / Clang (Linux & MinGW)
 Use aggressive optimization switches along with explicit architecture mapping:
 ```bash
-gcc -O3 -march=native -fopenmp ymm_final_en_mt_cb.c -o ymm_final_en_mt_cb
+gcc -O3 -march=native -fopenmp -funroll-loops ymm_final_en_mt_cb.c -o ymm_final_en_mt_cb
 ```
 
 ### MSVC (Windows)
 Ensure OpenMP and AVX2 switches are turned on in the compiler options:
 ```cmd
-cl /O2 /arch:AVX2 /openmp ymm_final_en_mt_cb.c /Fe:ymm_final_en_mt_cb
+cl /O2 /arch:AVX2 /openmp -funroll-loops ymm_final_en_mt_cb.c /Fe:ymm_final_en_mt_cb
 ```
 
 ## Usage
