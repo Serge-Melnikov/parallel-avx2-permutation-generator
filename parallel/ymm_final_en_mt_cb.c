@@ -21,15 +21,15 @@
  * - Compiler: GCC / MinGW / MSVC (Best performance achieved via -O3 -march=native -fopenmp -funroll-loops -s -Wall).
  */
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
 #include <immintrin.h>
 #include <omp.h>
-
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
 
 #define MAXN 16
 
