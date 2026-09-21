@@ -16,13 +16,13 @@
  * - Compiler: GCC / MinGW / MSVC (Best performance achieved via -O3 -mavx2 -funroll-loops).
  */
 
-#include <stdio.h>
-#include <inttypes.h>
-#include <immintrin.h>
-
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
+
+#include <stdio.h>
+#include <inttypes.h>
+#include <immintrin.h>
 
 /* Cross-compiler alignment configuration for GCC, Clang, and MSVC */
 #if defined(_MSC_VER)
