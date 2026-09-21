@@ -33,6 +33,16 @@
 
 #define MAXN 16
 
+/* Cross-compiler branch prediction configuration safe for MSVC, GCC, and Clang */
+#ifndef _MSC_VER
+    #define LIKELY(x)   __builtin_expect(!!(x), 1)
+    #define UNLIKELY(x) __builtin_expect(!!(x), 0)
+#else
+    /* MSVC does not support explicit branch hints natively; compile them out safely */
+    #define LIKELY(x)   (x)
+    #define UNLIKELY(x) (x)
+#endif
+
 /* Cross-compiler alignment configuration for GCC, Clang, and MSVC */
 #if defined(_MSC_VER)
     #define ALIGN_32 __declspec(align(32))
@@ -163,7 +173,7 @@ static inline void ProcessExtendedLadder(I32 n_val, __m256i currentYMM, int thre
       cb(debugBuf + 16, n_val + 1, thread_id, thread_quanta); /* Lane B mapped to output channel */
   }
   #else
-  if (__builtin_expect(!!(hiddenZero != 0), 0))
+  if (UNLIKELY(hiddenZero != 0))
   {
       ALIGN_32 U8 localBuf[32];
       _mm256_store_si256((__m256i*)localBuf, ladderYMM);
