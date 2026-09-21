@@ -49,31 +49,18 @@
 /* Cross-compiler trailing zero count configuration safe for MSVC, GCC, and Clang */
 #if defined(_MSC_VER)
     #include <intrin.h>
-    static inline uint64_t tzcnt_u64_fallback(uint64_t value) 
+    static inline uint64_t TZCNT_U64(uint64_t value) 
     {
         unsigned long index;
         if (_BitScanForward64(&index, value)) return (uint64_t)index;
         return 64;
     }
-    #define TZCNT_U64(x) tzcnt_u64_fallback(x)
-#define tzcnt_u64_fallback(x)
 #elif defined(__GNUC__) || defined(__clang__)
-    /* Builtin CTZ returns undefined for 0, so we must handle the 0 input explicitly */
-    static inline uint64_t tzcnt_u64_gcc(uint64_t value) 
+    static inline uint64_t TZCNT_U64(uint64_t value) 
     {
         if (value == 0) return 64;
         return (uint64_t)__builtin_ctzll(value);
     }
-    #define TZCNT_U64(x) tzcnt_u64_gcc(x)
-#else
-    static inline uint64_t tzcnt_u64_generic(uint64_t value) 
-    {
-        if (value == 0) return 64;
-        uint64_t count = 0;
-        while ((value & 1) == 0) { count++; value >>= 1; }
-        return count;
-    }
-    #define TZCNT_U64(x) tzcnt_u64_generic(x)
 #endif
 
 /* Cross-compiler optimization barrier configuration */
