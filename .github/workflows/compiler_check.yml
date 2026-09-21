@@ -15,11 +15,11 @@ jobs:
 
     - name: Verify GCC Compilation (Linux)
       run: |
-        gcc -O3 -mavx2 -fopenmp -pthread sequential/p_opt_en.c -o p_opt
-        # gcc -O3 -mavx2 -fopenmp -pthread sequential/ymm_final_en.c -o ymm_final_en
-        # gcc -O3 -mavx2 -fopenmp -pthread sequential/ymm_final_en1.c -o ymm_final_en1
-        # gcc -O3 -mavx2 -fopenmp -pthread parallel/ymm_final_en_mt.c -o ymm_final_en_mt
-        # gcc -O3 -mavx2 -fopenmp -pthread parallel/ymm_final_en_mt_cb.c -o ymm_final_en_mt_cb
+        # gcc -O3 -mavx2 -fopenmp -pthread sequential/p_opt_en.c -o p_opt
+        gcc -O3 -mavx2 -fopenmp -pthread sequential/ymm_final_en.c -o ymm_final_en
+        gcc -O3 -mavx2 -fopenmp -pthread sequential/ymm_final1_en.c -o ymm_final1_en
+        gcc -O3 -mavx2 -fopenmp -pthread parallel/ymm_final_en_mt.c -o ymm_final_en_mt
+        gcc -O3 -mavx2 -fopenmp -pthread parallel/ymm_final_en_mt_cb.c -o ymm_final_en_mt_cb
 
   verify-msvc-windows:
     runs-on: windows-latest
@@ -32,7 +32,8 @@ jobs:
 
     - name: Verify MSVC Compilation (Windows)
       run: |
-        cl /O2 /arch:AVX2 /openmp sequential/p_opt_en.c /Fe:p_opt
-        # cl /O2 /arch:AVX2 /openmp sequential/ymm_final_en.c /Fe:ymm_final_en
-        # cl /O2 /arch:AVX2 /openmp parallel/ymm_final_en_mt.c /Fe:ymm_final_en_mt
-        # cl /O2 /arch:AVX2 /openmp parallel/ymm_final_en_mt_cb.c /Fe:ymm_final_en_mt_cb
+        # cl /O2 /arch:AVX2 /openmp sequential/p_opt_en.c /Fe:p_opt
+        cl /O2 /arch:AVX2 /openmp sequential/ymm_final_en.c /Fe:ymm_final_en
+        cl /O2 /arch:AVX2 /openmp sequential/ymm_final1_en.c /Fe:ymm_final1_en
+        cl /O2 /arch:AVX2 /openmp parallel/ymm_final_en_mt.c /Fe:ymm_final_en_mt
+        cl /O2 /arch:AVX2 /openmp parallel/ymm_final_en_mt_cb.c /Fe:ymm_final_en_mt_cb
