@@ -443,8 +443,11 @@ void GenPermYMM_Half_Parallel(I32 n_val, int thread_id, I64 threadTargetPerm, I6
   /* Single localized thread merge once per core task lifetime to completely prevent false sharing */
   _Pragma("omp critical")
   {
-      ymmGlobalChecksum = _mm256_xor_si256((__m256i)ymmGlobalChecksum, threadLocalChecksum);
+      /* Safe volatile pointer indirection compliant with MSVC and GCC */
+      __m256i currentGlobal = *(__m256i*)&ymmGlobalChecksum;
+      ymmGlobalChecksum = _mm256_xor_si256(currentGlobal, threadLocalChecksum);
   }
+
 }
 
 int main(int argc, char* argv[])
@@ -539,7 +542,8 @@ int main(int argc, char* argv[])
 
   COMPILER_BARRIER();
   ALIGN_32 char finalBuf[32];
-  _mm256_store_si256((__m256i*)finalBuf, (__m256i)ymmGlobalChecksum);
+  /* Safe vector store bypassing volatile restrictions via explicit pointer evaluation */
+  _mm256_store_si256((__m256i*)finalBuf, *(__m256i*)&ymmGlobalChecksum);
   I64 totalSum = 0;
   for (I32 i = 0; i < 32; i++) totalSum += finalBuf[i];
 
