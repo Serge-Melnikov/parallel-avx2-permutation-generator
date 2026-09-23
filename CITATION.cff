@@ -4,7 +4,7 @@ authors:
   - family-names: "Melnikov"
     given-names: "Serge"
     orcid: "https://orcid.org/0009-0009-6494-6587"
-title: "Parallelizing the Factorial Space: Multi-Core OpenMP Scaling and Scalable SIMD Acceleration of the Steinhaus-Johnson-Trotter Algorithm via Dual-Lane AVX2 Execution"
+title: "Ultra-High-Throughput Parallel AVX2 Permutation Generator"
 version: 1.0.0
 doi: "10.48550/arXiv.2609.07862"
 date-released: 2026-09-07
