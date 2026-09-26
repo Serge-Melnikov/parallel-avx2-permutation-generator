@@ -1,3 +1,4 @@
+[![Hits](https://hits.sh/github.com/Serge-Melnikov/parallel-avx2-permutation-generator.svg)](https://hits.sh/github.com/Serge-Melnikov/parallel-avx2-permutation-generator/)
 # Ultra-High-Throughput Parallel AVX2 Permutation Generator
 
 A state-of-the-art SIMD-accelerated parallel algorithm for generating all n! permutations using a highly optimized variant of Shimon Even's method. The implementation utilizes 256-bit YMM registers to process split 128-bit lanes (Lane A and Lane B) simultaneously, achieving near-perfect linear scalability across physical CPU cores via OpenMP.
